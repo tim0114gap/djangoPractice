@@ -23,10 +23,46 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'bm06m+-hs$!mrw3da*s@cmr^vcy$c7ngmaml8$j3a+jx8g8uig'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+from socket import gethostname
+hostname = gethostname()
 
-ALLOWED_HOSTS = []
+if "COMPUTER-NAME" in hostname:
+    # デバッグ環境
+    DEBUG = True
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+    ALLOWED_HOSTS = [] # よくわからんけど、これも大事らしい
+else:
+    # 本番環境
+    DEBUG = False
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
+            },
+        },
+    }
 
+    # DB設定
+    import dj_database_url
+    PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+    db_from_env = dj_database_url.config()
+    DATABASES = {
+        'default': dj_database_url.config()
+    }
+    ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -48,6 +84,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'mysite.urls'
@@ -74,11 +111,10 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
+import dj_database_url
+db_from_env = dj_database_url.config()
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+    'default': dj_database_url.config()
 }
 
 
